@@ -1,45 +1,71 @@
 # -*- coding: utf-8 -*-
 from mysql import MYSQL
+import operator
 my = MYSQL("analyse")
+FIELDS=["one_month","three_month","six_month","one_year","three_year"]
+def query_field(field,condition):
+    sql="select %s from fund where %s;" %(field,condition)
+    infos = my.get_datas(sql)
+    return infos
 
-type="%混合%"
-count="30"
-field="one_month"
-sql="select code from fund where type like '%s' order by %s desc limit %s;" %(type,field,count)
-m1s = my.get_datas(sql)
-m1s = [m1[0] for m1 in m1s]
+def query_infos(type,count,field):
+    sql="select code,owner,name,level from fund where type like '%s' order by %s desc limit %s;" %(type,field,count)
+    infos = my.get_datas(sql)
+    return infos
 
-field="three_month"
-sql="select code from fund where type like '%s' order by %s desc limit %s;" %(type,field,count)
-m3s = my.get_datas(sql)
-m3s = [m3[0] for m3 in m3s]
+def analyse_percent(end):
+    type="%混合%"
+    count="50"
+    codes={}
+    funds=[]
+    time="+".join(FIELDS[0:end])
+    result=set()
+    for field in FIELDS[0:end]:
+        infos = query_infos(type,count,field)
+        #funds
+        for info in infos:
+            fund={}
+            fund['code']=info[0]
+            fund['owner']=info[1]
+            fund['name']=info[2]
+            fund['level']=info[3]
+            funds.append(fund)
+        #codes
+        cs = [info[0] for info in infos]
+        codes[field]=cs
+    for field in FIELDS[0:end]:
+        if result:
+            result = result & set(codes[field])
+        else:
+            result = set(codes[field])
+    print "############ %50s #############" %time
+    for r in list(result):
+        for f in funds:
+            if f['code'] == r:
+                print "CODE:%6s  NAME:%20s  LEVEL:%2s  OWNER:%s" %(f['code'],f['name'],f['level'],f['owner'])
+                break
 
-field="six_month"
-sql="select code from fund where type like '%s' order by %s desc limit %s;" %(type,field,count)
-m6s = my.get_datas(sql)
-m6s = [m6[0] for m6 in m6s]
+analyse_percent(3)
+analyse_percent(4)
+analyse_percent(5)
+print ""
+print ""
 
-
-field="one_year"
-sql="select code from fund where type like '%s' order by %s desc limit %s;" %(type,field,count)
-y1s = my.get_datas(sql)
-y1s = [y1[0] for y1 in y1s]
-
-field="three_year"
-sql="select code from fund where type like '%s' order by %s desc limit %s;" %(type,field,count)
-y3s = my.get_datas(sql)
-y3s = [y3[0] for y3 in y3s]
-
-my.close()
-
-m136s = list(set(m1s) & set(m3s) & set(m6s))
-m136y1s = list(set(m1s) & set(m3s) & set(m6s) & set(y1s))
-alls = list(set(m1s) & set(m3s) & set(m6s) & set(y1s) & set(y3s))
-print "1,3,6 months: %s" %m136s
-print "1,3,6 months 1 years: %s" %m136y1s
-print "1,3,6 months 1,3 years: %s" %alls
-
-
-
-
-
+def analyse_owners(end):
+    type="%混合%"
+    count="50"
+    owners={}
+    time="+".join(FIELDS[0:end])
+    for field in FIELDS[0:end]:
+        infos = query_infos(type,count,field)
+        os = [info[1].strip() for info in infos]
+        for owner in os:
+            if owner in owners.keys():
+               owners[owner]=owners[owner]+1
+            else:
+               owners[owner]=1
+    owners = sorted(owners.iteritems(),key=operator.itemgetter(1),reverse=True)
+    print "############ %s #############" %time
+    for o in owners:
+        print "%3s => %s" %(o[1],o[0])
+analyse_owners(4)

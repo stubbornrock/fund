@@ -21,7 +21,8 @@ def exec_shell_result(cmd):
         LOG.error("host exec subbprocess < %s >error!" %cmd)
     return result
 
-model={'evaluate_value':0.0,
+model={'name':"No",
+       'evaluate_value':0.0,
        'increase_value':0.0,
        'increase_percent':0.0,
        'per_value':0.0,
@@ -59,6 +60,9 @@ def fetch(start,end,thread_name):
             pass
         else:
             try:
+                title = soup.find("title")
+	        model['name']=title.text.split('(')[0]
+
                 item01 = soup.find("dl",class_="dataItem01")
                 model['evaluate_value'] = item01.contents[1].contents[0].text
                 model['increase_value'] = item01.contents[1].contents[2].contents[0].text
@@ -124,7 +128,8 @@ def fetch(start,end,thread_name):
                             model[key] = "1900-00-00"
                         else:
                             model[key] = "0.0"
-                sql='''UPDATE fund SET evaluate_value = %s,
+                sql='''UPDATE fund SET name = "%s", 
+                                   evaluate_value = %s,
                                    increase_value = %s,
                                    increase_percent = %s,
                                    per_value = %s,
@@ -147,7 +152,8 @@ def fetch(start,end,thread_name):
                                    owner = "%s",
                                    level = "%s",
                                    updated = %s
-                       WHERE url="%s";'''%(model['evaluate_value'],model['increase_value'],model['increase_percent'],
+                       WHERE url="%s";'''%(model['name'],
+                                           model['evaluate_value'],model['increase_value'],model['increase_percent'],
                                            model['per_value'],model['per_value_percent'],model['total_value'],
                                            model['wan_get'],model['seven_get'],model['fourting_get'],model['two_eghit_get'],
                                            model['one_month'],model['three_month'],model['six_month'],

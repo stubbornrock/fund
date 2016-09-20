@@ -110,6 +110,10 @@ function logs(){
     fi
 }
 
+function analyse(){
+    python ./modules/analyse.py
+}
+
 function menu(){
     echo_warn "################### Choose your Menu ##############"
     echo_warn "###                                            ####"
@@ -119,6 +123,7 @@ function menu(){
     echo_warn "###      cs --> crawler process stop           ####"
     echo_warn "###      p  --> path crawler error code        ####"
     echo_warn "###      h  --> how many fund has crawler      ####"
+    echo_warn "###      a  --> analyse the result             ####"
     echo_warn "###      q  --> exit the menu                  ####"
     echo_warn "###                                            ####"
     echo_warn "################### Choose your Menu ##############"
@@ -153,6 +158,10 @@ function start()
         'h')
             echo_info "Now start to find crawlerd fund num ..."
             logs
+            ;;
+        'a')
+            echo_info "Now start to analyse the result ..."
+            analyse
             ;;
         'q')
             exit
