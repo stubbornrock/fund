@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 class Model:
     def __init__(self):
         self.name = "No"
@@ -35,12 +34,7 @@ class Model:
                 self.type,self.size,self.manager,self.start_date,self.owner,self.level,self.updated,\
                 self.code)
 
-SQL = "UPDATE fund SET name = %s, evaluate_value = %s, increase_value = %s,increase_percent = %s,\
-per_value = %s, per_value_percent = %s, total_value = %s,\
-wan_get = %s, seven_get = %s, fourting_get = %s, two_eghit_get = %s,\
-one_month = %s,three_month = %s,six_month = %s,one_year = %s,three_year = %s,till_now = %s,\
-type = %s,size = %s, manager = %s,start_date = %s,owner = %s,level = %s,updated = %s\
-WHERE code = %s;"
+SQL = "UPDATE fund SET name=%s, evaluate_value=%s, increase_value=%s,increase_percent=%s,per_value=%s, per_value_percent=%s, total_value= %s,wan_get=%s, seven_get=%s, fourting_get=%s, two_eghit_get= %s,one_month=%s,three_month=%s,six_month=%s,one_year=%s,three_year=%s,till_now=%s,type=%s,size=%s, manager =%s,start_date =%s,owner=%s,level=%s,updated=%s WHERE code=%s;"
 
 if __name__ == '__main__':
     m = Model()

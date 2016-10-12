@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 from bs4 import BeautifulSoup
 import urllib2
@@ -24,8 +25,9 @@ def exec_shell_result(cmd):
         LOG.error("host exec subbprocess < %s >error!" %cmd)
     return result
 
-def prase_content(soup):
+def prase_content(soup,code):
     model = Model()
+    model.code = unicode(code,"utf-8")
     try:
         title = soup.find("title")
         model.name = title.text.split('(')[0]
@@ -111,7 +113,7 @@ def fetch(start,end,thread_name,logger):
     datas = []
     counter = 1
     for code in codes[start:end]:
-        logger.info("%s => %s => %s START PRASE DATA ..." %(thread_name,counter,code))
+        logger.info("%s => %s => ** %s ** START PRASE DATA ..." %(thread_name,counter,code))
         time.sleep(1)
         url="%s%s.html" %(WEB_URL,code)
         ##value
@@ -119,22 +121,25 @@ def fetch(start,end,thread_name,logger):
             body = urllib2.urlopen(url).read()
             soup = BeautifulSoup(body,"lxml")
         except Exception,e:
-            logger.error("%s => %s => %s URL OPEN FAIL :%s" %(thread_name,counter,code,str(e)))
+            logger.error("%s => %s => ** %s ** URL OPEN FAIL :%s" %(thread_name,counter,code,str(e)))
         else:
-            model = prase_content(soup)
+            model = prase_content(soup,code)
             ## append data
             if model: 
                 datas.append(model.get_model_tuple())
             else:
-                logger.error("%s => %s => %s START PRASE DATA FAIL ..." %(thread_name,counter,code))
+                logger.error("%s => %s => ** %s ** START PRASE DATA FAIL ..." %(thread_name,counter,code))
         finally:
             counter = counter + 1
     logger.info("%s => FINISH CRAWLER URLS DATA!" %thread_name)
     try:
         logger.info("%s => START UPDATE DATABSE ..." %thread_name)
+        print datas
         my.update_many_data(SQL,datas)
     except Exception,e:                
         logger.error("%s => UPDATE DATABSE FAIL :%s" %(thread_name,str(e)))
+    else:
+        logger.info("%s => UPDATE DATABSE SUCCESS!" %thread_name)
     finally:
         logger.info("%s => UPDATE DATABSE FINISH!!!!" %thread_name)
         my.close()
