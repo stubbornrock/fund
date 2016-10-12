@@ -42,9 +42,10 @@ def analyse_percent(end):
     for r in list(result):
         for f in funds:
             if f['code'] == r:
-                print "CODE:%6s  NAME:%20s  LEVEL:%2s  OWNER:%s" %(f['code'],f['name'],f['level'],f['owner'])
+                print "CODE:%-6s  NAME:%-30s  LEVEL:%-5s  OWNER:%-30s" %(f['code'],f['name'],f['level'],f['owner'])
                 break
-
+analyse_percent(1)
+analyse_percent(2)
 analyse_percent(3)
 analyse_percent(4)
 analyse_percent(5)
@@ -68,4 +69,5 @@ def analyse_owners(end):
     print "############ %s #############" %time
     for o in owners:
         print "%3s => %s" %(o[1],o[0])
+
 analyse_owners(4)

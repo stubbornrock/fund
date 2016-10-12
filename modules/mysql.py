@@ -23,6 +23,14 @@ class MYSQL:
 
     def insert_data(self,sql):
         self.cursor.execute(sql)
+        #self.conn.commit()
+
+    def insert_many_data(self,sql,data):
+        self.cursor.executemany(sql,data)
+        self.conn.commit()
+        
+    def update_many_data(self,sql,data):
+        self.cursor.executemany(sql,data)
         self.conn.commit()
 
     def update_data(self,sql):
@@ -33,14 +41,15 @@ class MYSQL:
         self.cursor.execute(sql)
 
     def close(self):
+        self.conn.commit()
         self.cursor.close()
         self.conn.close()
 
 if __name__ == '__main__':
     TABLE='''CREATE TABLE fund (
              ID int(50) NOT NULL auto_increment,
-             name varchar(200) NOT NULL,
-             code varchar(200 )NOT NULL,
+             code varchar(200) NOT NULL,
+             name varchar(200),
              evaluate_value  decimal(16,4),
              increase_value  decimal(16,4),
              increase_percent decimal(16,4),

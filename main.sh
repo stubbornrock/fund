@@ -25,6 +25,8 @@ function rebuild_db(){
 
 function pull_fund(){
     echo_info "Pull all fund info ...."
+    rm -rf ./allfund.html*
+    wget http://fund.eastmoney.com/allfund.html
     python ./modules/pull.py
     echo_info "Table Record nums ..."
     mysql -uroot -e "use fund;select count(*) from fund;"
@@ -33,12 +35,13 @@ function pull_fund(){
 function crawler(){
     mkdir -p /var/log/crawler/
     echo_info "Crawler all fund info ..."
-    read -p " >> Are you ready to start process using :(log|db):" c
-    if [[ $c == "log" ]];then
-        sh ./modules/crawler.sh log &
-    elif [[ $c == "db" ]];then
-        sh ./modules/crawler.sh db &
-    fi
+    #read -p " >> Are you ready to start process using :(log|db):" c
+    #if [[ $c == "log" ]];then
+    #    sh ./modules/crawler.sh log &
+    #elif [[ $c == "db" ]];then
+    #    sh ./modules/crawler.sh db &
+    #fi
+    sh ./modules/crawler.sh db &
 }
 
 function crawler_stop(){
@@ -94,20 +97,25 @@ function logs(){
     fi
     read -p " >> Are you ready to check process using :(log|db):" c
     if [[ $c == "log" ]];then
-        count=0
-        for file in `ls -l /var/log/crawler | awk '{print $9}'`;do
-            lines=`cat /var/log/crawler/$file | wc -l`
-            count=`expr $count + $lines`
-        done
-        echo_info "Crawler total Num: $count"
-        num=`grep -nr "FAIL" /var/log/crawler/*.* |wc -l`
-        echo_info "Crawler error Num: $num"
+       # count=0
+       # for file in `ls -l /var/log/crawler | awk '{print $9}'`;do
+       #     lines=`cat /var/log/crawler/$file | wc -l`
+       #     count=`expr $count + $lines`
+       # done
+       # echo_info "Crawler total Num: $count"
+       # num=`grep -nr "FAIL" /var/log/crawler/*.* |wc -l`
+       # echo_info "Crawler error Num: $num"
+       tail -f /var/log/crawler/thread_*
     elif [[ $c == "db" ]];then
         total=`mysql -uroot -e "use fund;select count(*) from fund;" | sed -n '2p'`
         count=`mysql -uroot -e "use fund;select count(*) from fund where updated=True;" |sed -n '2p'`
         echo_info "Crawler total Num: $total"
         echo_info "Crawler Num: $count"
     fi
+    #total=`mysql -uroot -e "use fund;select count(*) from fund;" | sed -n '2p'`
+    #count=`mysql -uroot -e "use fund;select count(*) from fund where updated=True;" |sed -n '2p'`
+    #echo_info "Crawler total   Num: $total"
+    #echo_info "Crawler updated Num: $count"
 }
 
 function analyse(){
