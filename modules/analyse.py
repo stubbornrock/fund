@@ -14,7 +14,7 @@ def query_infos(type,count,field):
     return infos
 
 def analyse_percent(end):
-    type="%混合%"
+    type="%债%"
     count="50"
     codes={}
     funds=[]
@@ -42,7 +42,8 @@ def analyse_percent(end):
     for r in list(result):
         for f in funds:
             if f['code'] == r:
-                print "CODE:%-6s  NAME:%-30s  LEVEL:%-5s  OWNER:%-30s" %(f['code'],f['name'],f['level'],f['owner'])
+                #print "CODE:%-10s LEVEL:%-5s NAME:%-10s OWNER:%s" %(f['code'],f['level'],f['name'],f['owner'])
+                print "CODE:%-10s LEVEL:%-5s NAME:%-10s" %(f['code'],f['level'],f['name'])
                 break
 analyse_percent(1)
 analyse_percent(2)

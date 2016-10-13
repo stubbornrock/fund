@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import urllib2
 import sqlite3
 import re
+from multiprocessing import Pool
 import threading
 from mysql import MYSQL
 from patch import check
@@ -108,10 +109,10 @@ def prase_content(soup,code):
                         setattr(model,key,float(value))
     return model
 
-def fetch(start,end,thread_name,logger):
+def thread_fetch(thread_codes,thread_name,logger):
     my = MYSQL(thread_name)
     update_sql = "UPDATE fund SET updated=False WHERE code=%s;"
-    code_set = codes[start:end]
+    code_set = thread_codes
     logger.info("%s => START  CLEAR UPDATED FIELD!" %thread_name)
     my.update_many_data(update_sql,code_set)
     logger.info("%s => FINISH CLEAR UPDATED FIELD!" %thread_name)
@@ -119,7 +120,7 @@ def fetch(start,end,thread_name,logger):
     logger.info("%s => START CRAWLER URLS DATA!" %thread_name)
     datas = []
     counter = 1
-    for code in codes[start:end]:
+    for code in thread_codes:
         logger.info("%s => %s => ** %s ** START PRASE DATA ..." %(thread_name,counter,code))
         time.sleep(1)
         url="%s%s.html" %(WEB_URL,code)
@@ -150,12 +151,43 @@ def fetch(start,end,thread_name,logger):
         logger.info("%s => UPDATE DATABSE FINISH!!!!" %thread_name)
         my.close()
 
-if __name__ == '__main__':
-    style = sys.argv[1]
+def process_fecth(process_name,process_codes):
+    total = len(process_codes)
+    threads = []
+    THREAD_NUM = 30
+    if (total % THREAD_NUM):
+        count = (total/THREAD_NUM)+1
+    else:
+        count = (total/THREAD_NUM)
+    #print "%s threads (%s) start ... each num: %s" %(process_name,count,THREAD_NUM)
+    for i in range(count):
+        thread_name = "%s_thread_%d" %(process_name,i)
+        thread_codes_start=i*THREAD_NUM
+        thread_codes_end=i*THREAD_NUM+THREAD_NUM
+        start = 0
+        end = 0
+        if thread_codes_start <= total:
+            start = thread_codes_start
+            if thread_codes_end <= total:
+                end = thread_codes_end
+            else:
+                end = total
+        thread_codes = process_codes[start:end]
+        logger = LOG(thread_name)
+        mylogger = logger.get_logger()
+        th = threading.Thread(name=thread_name,target=thread_fetch,args=(thread_codes,thread_name,mylogger))
+        threads.append(th)
+        #print thread_name,len(thread_codes)
+    for t in threads:
+        t.start()
+        t.join()
+    #print "%s threads (%s) finish done ... " %(process_name,count)
+    
+def get_codes(style,c):
     codes = []
     if style == "all":
         main_sl =  MYSQL("main")
-        codes = main_sl.get_datas("select code from fund;") 
+        codes = main_sl.get_datas("select code from fund;")
         codes = [code[0] for code in codes]
         main_sl.close()
     elif style == "patch":
@@ -164,39 +196,41 @@ if __name__ == '__main__':
         codes = [code[0] for code in codes]
         patch_sl.close()
     elif style == "one":
-        code = sys.argv[2]
+        code = c
         codes.append(code)
+    return codes
 
+if __name__ == '__main__':
+    style = sys.argv[1]
+    c = None
+    if len(sys.argv) > 2:
+        c = sys.argv[2]
+    codes = get_codes(style,c)
     total = len(codes)
-    threads = []
     exec_shell_result("rm -rf /var/log/crawler/*.*")
-    for i in range(100):
-        my_codes_start=i*100
-        my_codes_end=i*100+100
-   
+
+    ################################################
+    p = Pool(50)
+    PROCESS_NUM = 500
+    if (total % PROCESS_NUM):
+        count = (total/PROCESS_NUM)+1
+    else:
+        count = (total/PROCESS_NUM)
+    print "All subprocess (%s) start ... each num: %s" %(count,PROCESS_NUM)
+    for i in range(count):
+        process_name = "process_%d" %i
+        process_codes_start=i*PROCESS_NUM
+        process_codes_end=i*PROCESS_NUM+PROCESS_NUM
         start = 0
         end = 0
-        if my_codes_start <= total:
-            start = my_codes_start
-            if my_codes_end <= total:
-                end = my_codes_end
+        if process_codes_start <= total:
+            start = process_codes_start
+            if process_codes_end <= total:
+                end = process_codes_end
             else:
                 end = total
-        else:
-            break
-        thread_name = "thread_%s->%s" %(start,end)
-        logger = LOG(thread_name)
-        mylogger = logger.get_logger()
-        th = threading.Thread(name=thread_name,target=fetch,args=(start,end,thread_name,mylogger))
-        threads.append(th)
-
-    for t in threads:
-        t.start()
-    while True:
-        th_num = threading.activeCount() - 1
-        #print "Current Has %d threads active crawlering datas waiting ..." %th_num
-        #current_th_names = [item.name for item in threading.enumerate() if item.name !='MainThread']
-        if th_num == 0:
-            break
-        time.sleep(5)
-    #print "Finshed!"
+        process_codes = codes[start:end]
+        p.apply_async(process_fecth,args=(process_name,process_codes,))
+    p.close()
+    p.join()
+    print "All subprocesses (%s) finish done ..." %count
